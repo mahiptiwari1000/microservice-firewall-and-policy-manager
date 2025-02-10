@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Visualization from "./visualization/Visualization";
 import { useNetwork } from "@/context/NetworkContext";
 import { API_BASE_URL } from "@/config";
 import { Policy } from "./types";
