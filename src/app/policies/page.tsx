@@ -1,30 +1,103 @@
 "use client";
 import { Policy } from "@/types";
-
-
-import React, { useState } from "react";
+import { API_BASE_URL } from "@/config";
+import React, { useEffect, useState } from "react";
+import { useNetwork } from "@/context/NetworkContext";
 
 const AccessPolicies: React.FC = () => {
-    const [policies, setPolicies] = useState<Policy[]>([
-        { id: 1, source: "Web Server", target: "Database Server", action: "allow" },
-        { id: 2, source: "Firewall", target: "Application Server", action: "deny" }
-    ]);
-
+    const [policies, setPolicies] = useState<Policy[]>([]);
+    const { nodes, links, fetchData } = useNetwork();
     const [newPolicy, setNewPolicy] = useState<Policy>({ id: 0, source: "", target: "", action: "allow" });
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const fetchPolicies = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}api/policies`);
+            const data = await response.json();
+            setPolicies(data);
+        } catch (error) {
+            console.error("Error fetching policies:", error);
+        }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setNewPolicy({ ...newPolicy, [e.target.name]: e.target.value });
     };
 
-    const addPolicy = () => {
-        if (!newPolicy.source || !newPolicy.target) return;
-        setPolicies([...policies, { ...newPolicy, id: Date.now() }]);
-        setNewPolicy({ id: 0, source: "", target: "", action: "allow" }); // Reset form
+    const addPolicy = async () => {
+        if (!newPolicy.source || !newPolicy.target) {
+            return alert("Please enter both Source and Target nodes!");
+        }
+
+        try {
+            await fetch(`${API_BASE_URL}api/policies`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newPolicy),
+            });
+
+            const sourceExists = nodes.some(node => node.id === newPolicy.source);
+            const targetExists = nodes.some(node => node.id === newPolicy.target);
+
+            const existingLink = links.find(
+                link => link.source === newPolicy.source && link.target === newPolicy.target
+            );
+
+            if (existingLink && existingLink.status !== newPolicy.action) {
+                await fetch(`${API_BASE_URL}api/network`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        nodes: [],
+                        links: [{ source: newPolicy.source, target: newPolicy.target, status: newPolicy.action }]
+                    }),
+                });
+            }
+
+            if (!sourceExists || !targetExists || !existingLink) {
+                console.log("Adding new nodes/links to network...");
+                await fetch(`${API_BASE_URL}api/network`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        nodes: [
+                            ...(sourceExists ? [] : [{ id: newPolicy.source, group: "Unknown" }]),
+                            ...(targetExists ? [] : [{ id: newPolicy.target, group: "Unknown" }])
+                        ],
+                        links: existingLink 
+                            ? []
+                            : [{ source: newPolicy.source, target: newPolicy.target, status: newPolicy.action }]
+                    }),
+                });
+            }
+
+            fetchData();
+            fetchPolicies();
+
+        } catch (error) {
+            console.error("Error adding policy:", error);
+        }
+
+        setNewPolicy({ id: 0, source: "", target: "", action: "allow" });
     };
 
-    const deletePolicy = (id: number) => {
-        setPolicies(policies.filter(policy => policy.id !== id));
+    const deletePolicy = async (id: number) => {
+        try {
+            await fetch(`${API_BASE_URL}api/policies/${id}`, {
+                method: "DELETE",
+            });
+
+            setPolicies(policies.filter(policy => policy.id !== id));
+
+            fetchData();
+            fetchPolicies();
+        } catch (error) {
+            console.error("Error deleting policy:", error);
+        }
     };
+
+    useEffect(() => {
+        fetchPolicies();
+    }, []);
 
     return (
         <div className="p-6">
@@ -33,24 +106,30 @@ const AccessPolicies: React.FC = () => {
             <div className="bg-gray-800 p-4 rounded-lg shadow-md mb-6">
                 <h2 className="text-lg font-semibold mb-3">Add New Policy</h2>
                 <div className="flex gap-2">
-                    <select name="source" value={newPolicy.source} onChange={handleInputChange}
-                        className="bg-gray-700 p-2 rounded text-white">
-                        <option value="">Select Source</option>
-                        <option value="Web Server">Web Server</option>
-                        <option value="Database Server">Database Server</option>
-                        <option value="Firewall">Firewall</option>
-                    </select>
+                    <input
+                        type="text"
+                        name="source"
+                        placeholder="Enter Source Node"
+                        value={newPolicy.source}
+                        onChange={handleInputChange}
+                        className="bg-gray-700 p-2 rounded text-white"
+                    />
 
-                    <select name="target" value={newPolicy.target} onChange={handleInputChange}
-                        className="bg-gray-700 p-2 rounded text-white">
-                        <option value="">Select Target</option>
-                        <option value="Application Server">Application Server</option>
-                        <option value="Firewall">Firewall</option>
-                        <option value="Database Server">Database Server</option>
-                    </select>
+                    <input
+                        type="text"
+                        name="target"
+                        placeholder="Enter Target Node"
+                        value={newPolicy.target}
+                        onChange={handleInputChange}
+                        className="bg-gray-700 p-2 rounded text-white"
+                    />
 
-                    <select name="action" value={newPolicy.action} onChange={handleInputChange}
-                        className="bg-gray-700 p-2 rounded text-white">
+                    <select
+                        name="action"
+                        value={newPolicy.action}
+                        onChange={handleInputChange}
+                        className="bg-gray-700 p-2 rounded text-white"
+                    >
                         <option value="allow">Allow</option>
                         <option value="deny">Deny</option>
                     </select>
@@ -63,27 +142,28 @@ const AccessPolicies: React.FC = () => {
 
             <div className="bg-gray-800 p-4 rounded-lg shadow-md">
                 <h2 className="text-lg font-semibold mb-3">Existing Policies</h2>
-                <table className="w-full text-white">
+
+                <table className="w-full text-white border-collapse">
                     <thead>
-                        <tr className="bg-gray-700">
-                            <th className="p-2">Source</th>
-                            <th className="p-2">Target</th>
-                            <th className="p-2">Action</th>
-                            <th className="p-2">Options</th>
+                        <tr className="bg-gray-700 text-left">
+                            <th className="p-3">Source</th>
+                            <th className="p-3">Target</th>
+                            <th className="p-3">Action</th>
+                            <th className="p-3">Options</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {policies.map(policy => (
-                            <tr key={policy.id} className="border-b border-gray-600">
-                                <td className="p-2">{policy.source}</td>
-                                <td className="p-2">{policy.target}</td>
-                                <td className="p-2">
-                                    <span className={`px-2 py-1 rounded-md 
+                        {policies.map((policy, index) => (
+                            <tr key={index} className="border-b border-gray-600">
+                                <td className="p-3">{policy.source}</td>
+                                <td className="p-3">{policy.target}</td>
+                                <td className="p-3">
+                                    <span className={`px-2 py-1 rounded-md text-sm font-medium 
                                         ${policy.action === "allow" ? "bg-green-500" : "bg-red-500"}`}>
                                         {policy.action === "allow" ? "Allow" : "Deny"}
                                     </span>
                                 </td>
-                                <td className="p-2">
+                                <td className="p-3">
                                     <button onClick={() => deletePolicy(policy.id)}
                                         className="bg-red-600 px-3 py-1 rounded hover:bg-red-500">
                                         Delete 

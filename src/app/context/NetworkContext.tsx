@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { Node, Link } from "@/types";
+import {API_BASE_URL} from "@/config";
 
 // Define Context Type
 interface NetworkContextType {
@@ -19,35 +20,20 @@ const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 
 // Provider Component
 export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // const [nodes, setNodes] = useState<Node[]>([]);
-    // const [links, setLinks] = useState<Link[]>([]);
+     const [nodes, setNodes] = useState<Node[]>([]);
+     const [links, setLinks] = useState<Link[]>([]);
 
-    // Sample Data
-const nodes = [
-    { id: "Web Server", group: "Service" },
-    { id: "Database Server", group: "Database" },
-    { id: "Application Server", group: "Service" },
-    { id: "Firewall", group: "Security" }
-];
 
-const links = [
-    { source: "Web Server", target: "Application Server", status: "allow" },
-    { source: "Application Server", target: "Database Server", status: "allow" },
-    { source: "Web Server", target: "Database Server", status: "deny" },
-    { source: "Firewall", target: "Web Server", status: "allow" }
-];
-
-    // Function to fetch data from backend (Simulated)
-    // const fetchData = async () => {
-    //     try {
-    //         const response = await fetch("/api/network"); // Replace with actual backend API
-    //         const data = await response.json();
-    //         setNodes(data.nodes);
-    //         setLinks(data.links);
-    //     } catch (error) {
-    //         console.error("Failed to fetch network data", error);
-    //     }
-    // };
+    const fetchData = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}api/network`); // Replace with actual backend API
+            const data = await response.json();
+            setNodes(data.nodes);
+            setLinks(data.links);
+        } catch (error) {
+            console.error("Failed to fetch network data", error);
+        }
+    };
 
     // Function to add a new node
     // const addNode = (node: Node) => {
@@ -72,9 +58,13 @@ const links = [
     //     setLinks((prevLinks) => prevLinks.filter((_, index) => index !== linkIndex));
     // };
 
+    useEffect(() => {
+        fetchData();
+    }, [])
+
     return (
         // <NetworkContext.Provider value={{ nodes, links, addNode, addLink, removeNode, removeLink, fetchData }}>
-        <NetworkContext.Provider value={{ nodes, links}}>
+        <NetworkContext.Provider value={{ nodes, links, fetchData}}>
             {children}
         </NetworkContext.Provider>
     );

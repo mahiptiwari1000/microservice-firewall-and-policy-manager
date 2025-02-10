@@ -59,12 +59,12 @@ linkSelection
     .attr("stroke-dashoffset", "10")
     .on("end", function repeat() {
         d3.select(this)
-            .attr("stroke-dashoffset", "0") // ✅ Reset position
+            .attr("stroke-dashoffset", "0") 
             .transition()
             .duration(1000)
             .ease(d3.easeLinear)
             .attr("stroke-dashoffset", "10")
-            .on("end", repeat); // ✅ Loop animation
+            .on("end", repeat);
     });
 }
 
@@ -177,7 +177,6 @@ linkSelection
             {selectedNode && (
                 <div className="absolute right-4 top-20 bg-gray-800 p-4 rounded-md w-80 shadow-lg">
                     <h3 className="text-lg font-bold text-white">{selectedNode.id}</h3>
-                    <p className="text-gray-400">Type: {selectedNode.group}</p>
                     <button onClick={() => setSelectedNode(null)} className="mt-2 bg-red-500 px-3 py-1 rounded">
                         Close
                     </button>
@@ -193,10 +192,7 @@ linkSelection
         <div className="w-4 h-4 bg-red-500 rounded-full"></div> <span>Blocked Connection</span>
     </div>
     <div className="flex items-center gap-2">
-        <div className="w-4 h-4 bg-blue-500 rounded-full"></div> <span>Server</span>
-    </div>
-    <div className="flex items-center gap-2">
-        <div className="w-4 h-4 bg-yellow-500 rounded-full"></div> <span>Firewall</span>
+        <div className="w-4 h-4 bg-blue-500 rounded-full"></div> <span>Node</span>
     </div>
 </div>
         </div>);

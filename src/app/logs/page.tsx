@@ -6,7 +6,6 @@ import { Download } from "lucide-react";
 
 
 const initialLogs: Log[] = [
-    { id: 1, timestamp: "2025-02-09 10:15 AM", category: "Policy Update", message: "Access policy updated: Web Server → Database Server (Allow)" },
     { id: 2, timestamp: "2025-02-09 09:45 AM", category: "Intrusion Attempt", message: "Unauthorized access attempt detected from 192.168.1.12" },
     { id: 3, timestamp: "2025-02-09 08:30 AM", category: "User Login", message: "Admin user logged in successfully" },
     { id: 4, timestamp: "2025-02-09 07:00 AM", category: "Other", message: "System health check completed" }

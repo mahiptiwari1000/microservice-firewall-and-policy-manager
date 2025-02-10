@@ -28,3 +28,10 @@ export interface Log {
     category: "Policy Update" | "Intrusion Attempt" | "User Login" | "Other";
     message: string;
 }
+
+export interface Policy {
+    id?: string;
+    source: string;
+    target: string;
+    action: "allow" | "deny";
+}

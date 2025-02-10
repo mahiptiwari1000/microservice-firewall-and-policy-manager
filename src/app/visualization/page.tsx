@@ -5,11 +5,11 @@ import Visualization from "./Visualization";
 import { useNetwork } from "@/context/NetworkContext";
 
 export default function Page() {
-    const { nodes, links } = useNetwork();
+    const { nodes, links, fetchData } = useNetwork();
     const [search, setSearch] = useState("");
 
     const filteredNodes = nodes.filter(node =>
-        node.group.toLowerCase().includes(search.toLowerCase())
+        node.id.toLowerCase().includes(search.toLowerCase())
     );
 
 
