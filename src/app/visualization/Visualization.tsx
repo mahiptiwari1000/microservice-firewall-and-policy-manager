@@ -31,6 +31,13 @@ const Visualization: React.FC<Props> = ({ nodes, links }) => {
         
         const g = svg.append("g");
 
+        zoomRef.current = d3.zoom<SVGSVGElement, unknown>()
+        .scaleExtent([0.5, 5])
+        .on("zoom", (event) => {
+          g.attr("transform", event.transform);
+        });
+      svg.call(zoomRef.current);    
+
         const simulation = d3.forceSimulation<Node>(nodes) 
     .force("link", d3.forceLink<Node, Link>(links).id((d:Node) => d.id).distance(150))
     .force("charge", d3.forceManyBody().strength(-300))
@@ -142,15 +149,21 @@ const Visualization: React.FC<Props> = ({ nodes, links }) => {
 
     const handleZoomIn = () => {
         if (svgRef.current && zoomRef.current) {
-            d3.select(svgRef.current).transition().duration(300).call(zoomRef.current.scaleBy, 1.2);
+          d3.select(svgRef.current)
+            .transition()
+            .duration(300)
+            .call(zoomRef.current.scaleBy, 1.2);
         }
-    };
-
-    const handleZoomOut = () => {
+      };
+      
+      const handleZoomOut = () => {
         if (svgRef.current && zoomRef.current) {
-            d3.select(svgRef.current).transition().duration(300).call(zoomRef.current.scaleBy, 0.8);
+          d3.select(svgRef.current)
+            .transition()
+            .duration(300)
+            .call(zoomRef.current.scaleBy, 0.8);
         }
-    };
+      };
 
     return (
         <div className="relative w-full h-full">
