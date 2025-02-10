@@ -5,7 +5,7 @@ import Visualization from "./Visualization";
 import { useNetwork } from "@/context/NetworkContext";
 
 export default function Page() {
-    const { nodes, links, fetchData } = useNetwork();
+    const { nodes, links } = useNetwork();
     const [search, setSearch] = useState("");
 
     const filteredNodes = nodes.filter(node =>

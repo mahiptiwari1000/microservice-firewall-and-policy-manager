@@ -22,7 +22,6 @@ const Visualization: React.FC<Props> = ({ nodes, links }) => {
         const width = 800;
         const height = 600;
 
-        // Clear previous SVG elements
         d3.select(svgRef.current).selectAll("*").remove();
 
         const svg = d3.select(svgRef.current)
@@ -32,45 +31,43 @@ const Visualization: React.FC<Props> = ({ nodes, links }) => {
         
         const g = svg.append("g");
 
-        // Force simulation setup
-        const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(150))
-            .force("charge", d3.forceManyBody().strength(-300))
-            .force("center", d3.forceCenter(width / 2, height / 2));
+        const simulation = d3.forceSimulation<Node>(nodes) 
+    .force("link", d3.forceLink<Node, Link>(links).id((d:Node) => d.id).distance(150))
+    .force("charge", d3.forceManyBody().strength(-300))
+    .force("center", d3.forceCenter(width / 2, height / 2));
 
-       // Create link elements (edges)
-const link = g.selectAll(".link")
-.data(links)
-.enter()
-.append("line")
-.attr("class", "link")
-.attr("stroke", d => d.status === "allow" ? "green" : "red")
-.attr("stroke-width", 2)
-.attr("stroke-dasharray", "5,5") 
-.each(function () {
-    animateLinks(d3.select(this)); 
-});
+    function animateLinks(
+        linkSelection: d3.Selection<SVGLineElement, { source: string; target: string; status: string }, SVGGElement, unknown>
+      ) {
+        linkSelection
+          .transition()
+          .duration(1000)
+          .ease(d3.easeLinear)
+          .attr("stroke-dashoffset", "10") 
+          .on("end", function repeat() {
+            d3.select(this as SVGLineElement) 
+              .attr("stroke-dashoffset", "0") 
+              .transition()
+              .duration(1000)
+              .ease(d3.easeLinear)
+              .attr("stroke-dashoffset", "10")
+              .on("end", repeat); 
+          });
+      }
 
-function animateLinks(linkSelection) {
-linkSelection
-    .transition()
-    .duration(1000)
-    .ease(d3.easeLinear)
-    .attr("stroke-dashoffset", "10")
-    .on("end", function repeat() {
-        d3.select(this)
-            .attr("stroke-dashoffset", "0") 
-            .transition()
-            .duration(1000)
-            .ease(d3.easeLinear)
-            .attr("stroke-dashoffset", "10")
-            .on("end", repeat);
-    });
-}
+      const link = g.selectAll<SVGLineElement, { source: string; target: string; status: string }>(".link")
+      .data(links)
+      .enter()
+      .append("line")
+      .attr("class", "link")
+      .attr("stroke", d => d.status === "allow" ? "green" : "red")
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "5,5")
+      .each(function () {
+        animateLinks(d3.select<SVGLineElement, { source: string; target: string; status: string }>(this));
+      });
+    
 
-
-
-        // Create node elements (circles)
         const node = g.selectAll(".node")
             .data(nodes)
             .enter()
@@ -83,7 +80,6 @@ linkSelection
             }) 
             .call(drag(simulation));
 
-        // Create tooltip div (positioned absolutely)
         const tooltip = d3.select("body").append("div")
             .attr("class", "tooltip")
             .style("position", "absolute")
@@ -95,8 +91,6 @@ linkSelection
             .style("pointer-events", "none");
 
                  
-
-        // Tooltip Event Handlers
         node.on("mouseover", (event, d) => {
             tooltip.html(`<strong>${d.id}</strong>`)
                 .style("left", `${event.pageX + 10}px`)
@@ -111,37 +105,35 @@ linkSelection
             tooltip.style("visibility", "hidden");
         });
 
-        // Simulation tick update
         simulation.on("tick", () => {
-            link.attr("x1", d => d.source.x!)
-                .attr("y1", d => d.source.y!)
-                .attr("x2", d => d.target.x!)
-                .attr("y2", d => d.target.y!);
-
-            node.attr("cx", d => d.x!)
-                .attr("cy", d => d.y!);
+            link.attr("x1", (d: Link) => (d.source as Node).x!)
+                .attr("y1", (d: Link) => (d.source as Node).y!)
+                .attr("x2", (d: Link) => (d.target as Node).x!)
+                .attr("y2", (d: Link) => (d.target as Node).y!);
+        
+            node.attr("cx", (d: Node) => d.x!)
+                .attr("cy", (d: Node) => d.y!);
         });
         
-        // Drag functionality
-        function drag(simulation) {
-            return d3.drag()
-                .on("start", (event, d) => {
+        
+        function drag(simulation: d3.Simulation<Node, undefined>) {
+            return d3.drag<SVGCircleElement, Node>()
+                .on("start", (event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) => {
                     if (!event.active) simulation.alphaTarget(0.3).restart();
                     d.fx = d.x;
                     d.fy = d.y;
                 })
-                .on("drag", (event, d) => {
+                .on("drag", (event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) => {
                     d.fx = event.x;
                     d.fy = event.y;
                 })
-                .on("end", (event, d) => {
+                .on("end", (event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) => {
                     if (!event.active) simulation.alphaTarget(0);
                     d.fx = null;
                     d.fy = null;
                 });
-        }        
+        }              
 
-        // Cleanup on unmount
         return () => {
             tooltip.remove();
         };

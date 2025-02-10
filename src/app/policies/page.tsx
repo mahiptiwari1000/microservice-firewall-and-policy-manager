@@ -7,14 +7,15 @@ import { useNetwork } from "@/context/NetworkContext";
 const AccessPolicies: React.FC = () => {
     const [policies, setPolicies] = useState<Policy[]>([]);
     const { nodes, links, fetchData } = useNetwork();
-    const [newPolicy, setNewPolicy] = useState<Policy>({ id: 0, source: "", target: "", action: "allow" });
+    const [newPolicy, setNewPolicy] = useState<Policy>({ id: "", source: "", target: "", action: "allow" });
 
+    
     const fetchPolicies = async () => {
         try {
             const response = await fetch(`${API_BASE_URL}api/policies`);
             const data = await response.json();
-            setPolicies(data.map(policy => ({
-                _id: policy._id, // Ensure _id is mapped correctly
+            setPolicies(data.map((policy: Policy) => ({
+                _id: policy._id,
                 source: policy.source,
                 target: policy.target,
                 action: policy.action
@@ -59,7 +60,6 @@ const AccessPolicies: React.FC = () => {
             }
 
             if (!sourceExists || !targetExists || !existingLink) {
-                console.log("Adding new nodes/links to network...");
                 await fetch(`${API_BASE_URL}api/network`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -74,6 +74,7 @@ const AccessPolicies: React.FC = () => {
                     }),
                 });
             }
+    
 
             fetchData();
             fetchPolicies();
@@ -82,51 +83,51 @@ const AccessPolicies: React.FC = () => {
             console.error("Error adding policy:", error);
         }
 
-        setNewPolicy({ id: 0, source: "", target: "", action: "allow" });
+        setNewPolicy({ id: "", source: "", target: "", action: "allow" });
     };
 
-    const deletePolicy = async (id: string) => {
-        try {
-            const policyToDelete = policies.find(policy => policy._id === id);
-            if (!policyToDelete) {
-                console.error("Policy not found!");
-                return;
-            }
+    // const deletePolicy = async (id: string) => {
+    //     try {
+    //         const policyToDelete = policies.find(policy => policy._id === id);
+    //         if (!policyToDelete) {
+    //             console.error("Policy not found!");
+    //             return;
+    //         }
     
-            const { source, target } = policyToDelete;
+    //         const { source, target } = policyToDelete;
     
-            await fetch(`${API_BASE_URL}api/policies/${id}`, {
-                method: "DELETE",
-            });
+    //         await fetch(`${API_BASE_URL}api/policies/${id}`, {
+    //             method: "DELETE",
+    //         });
     
-            await fetch(`${API_BASE_URL}api/network/link/${source}/${target}`, {
-                method: "DELETE",
-            });
+    //         await fetch(`${API_BASE_URL}api/network/link/${source}/${target}`, {
+    //             method: "DELETE",
+    //         });
     
-            const remainingLinks = links.filter(
-                link => link.source === source || link.target === source || link.source === target || link.target === target
-            );
+    //         const remainingLinks = links.filter(
+    //             link => link.source === source || link.target === source || link.source === target || link.target === target
+    //         );
     
-            if (!remainingLinks.some(link => link.source === source || link.target === source)) {
-                await fetch(`${API_BASE_URL}api/network/node/${source}`, {
-                    method: "DELETE",
-                });
-            }
+    //         if (!remainingLinks.some(link => link.source === source || link.target === source)) {
+    //             await fetch(`${API_BASE_URL}api/network/node/${source}`, {
+    //                 method: "DELETE",
+    //             });
+    //         }
     
-            if (!remainingLinks.some(link => link.source === target || link.target === target)) {
-                await fetch(`${API_BASE_URL}api/network/node/${target}`, {
-                    method: "DELETE",
-                });
-            }
+    //         if (!remainingLinks.some(link => link.source === target || link.target === target)) {
+    //             await fetch(`${API_BASE_URL}api/network/node/${target}`, {
+    //                 method: "DELETE",
+    //             });
+    //         }
     
-            setPolicies(policies.filter(policy => policy._id !== id));
+    //         setPolicies(policies.filter(policy => policy._id !== id));
     
-            fetchData();
-            fetchPolicies();
-        } catch (error) {
-            console.error("Error deleting policy:", error);
-        }
-    };
+    //         fetchData();
+    //         fetchPolicies();
+    //     } catch (error) {
+    //         console.error("Error deleting policy:", error);
+    //     }
+    // };
     
 
     useEffect(() => {
@@ -183,7 +184,6 @@ const AccessPolicies: React.FC = () => {
                             <th className="p-3">Source</th>
                             <th className="p-3">Target</th>
                             <th className="p-3">Action</th>
-                            <th className="p-3">Options</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -197,12 +197,12 @@ const AccessPolicies: React.FC = () => {
                                         {policy.action === "allow" ? "Allow" : "Deny"}
                                     </span>
                                 </td>
-                                <td className="p-3">
+                                {/* <td className="p-3">
                                 <button onClick={() => deletePolicy(policy._id)}
                                         className="bg-red-600 px-3 py-1 rounded hover:bg-red-500">
                                         Delete 
                                     </button>
-                                </td>
+                                </td> */}
                             </tr>
                         ))}
                     </tbody>

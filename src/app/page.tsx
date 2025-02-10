@@ -41,7 +41,7 @@ const Dashboard: React.FC = () => {
 
           const sourceExists = nodes.some(node => node.id === source);
           const targetExists = nodes.some(node => node.id === target);
-          const existingLink = links.some(link => link.source === source && link.target === target);
+          const existingLink = links.find(link => link.source === source && link.target === target);
 
           if (!sourceExists || !targetExists || !existingLink || (existingLink && existingLink.status !== action)) {
             await fetch(`${API_BASE_URL}api/network`, {
@@ -53,15 +53,13 @@ const Dashboard: React.FC = () => {
                         ...(targetExists ? [] : [{ id: target, group: "Unknown" }])
                     ],
                     links: existingLink && existingLink.status !== action 
-                        ? [{ source, target, status: action }] // ✅ If action changed, update status
+                        ? [{ source, target, status: action }] 
                         : existingLink 
-                            ? [] // ✅ Don't add the same link again
-                            : [{ source, target, status: action }] // ✅ If link doesn't exist, add it
+                            ? [] 
+                            : [{ source, target, status: action }] 
                 }),
             });
-        
-            console.log("✅ Network updated!");
-        }        
+          }        
 
           fetchData();
           fetchPolicies();

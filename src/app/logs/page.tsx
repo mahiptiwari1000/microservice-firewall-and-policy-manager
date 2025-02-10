@@ -1,30 +1,30 @@
 "use client";
-import { Log } from "@/types";
+// import { Log } from "@/types";
 
 import React, { useState } from "react";
 import { Download } from "lucide-react";
 
 
-const initialLogs: Log[] = [
-    { id: 2, timestamp: "2025-02-09 09:45 AM", category: "Intrusion Attempt", message: "Unauthorized access attempt detected from 192.168.1.12" },
-    { id: 3, timestamp: "2025-02-09 08:30 AM", category: "User Login", message: "Admin user logged in successfully" },
-    { id: 4, timestamp: "2025-02-09 07:00 AM", category: "Other", message: "System health check completed" }
-];
+// const initialLogs: Log[] = [
+//     { id: 2, timestamp: "2025-02-09 09:45 AM", category: "Intrusion Attempt", message: "Unauthorized access attempt detected from 192.168.1.12" },
+//     { id: 3, timestamp: "2025-02-09 08:30 AM", category: "User Login", message: "Admin user logged in successfully" },
+//     { id: 4, timestamp: "2025-02-09 07:00 AM", category: "Other", message: "System health check completed" }
+// ];
 
 const Logs: React.FC = () => {
-    const [logs, setLogs] = useState<Log[]>(initialLogs);
+    // const [logs, setLogs] = useState<Log[]>(initialLogs);
     const [filter, setFilter] = useState<string>("All");
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setFilter(e.target.value);
     };
 
-    const filteredLogs = filter === "All" ? logs : logs.filter(log => log.category === filter);
+    // const filteredLogs = filter === "All" ? logs : logs.filter(log => log.category === filter);
 
     const downloadLogs = () => {
         const csvContent = [
             ["ID", "Timestamp", "Category", "Message"],
-            ...logs.map(log => [log.id, log.timestamp, log.category, log.message])
+            // ...logs.map(log => [log.id, log.timestamp, log.category, log.message])
         ]
         .map(e => e.join(","))
         .join("\n");
@@ -68,7 +68,7 @@ const Logs: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredLogs.map(log => (
+                        {/* {filteredLogs.map(log => (
                             <tr key={log.id} className="border-b border-gray-600">
                                 <td className="p-2">{log.timestamp}</td>
                                 <td className={`p-2 ${log.category === "Intrusion Attempt" ? "text-red-500" : "text-white"}`}>
@@ -76,7 +76,7 @@ const Logs: React.FC = () => {
                                 </td>
                                 <td className="p-2">{log.message}</td>
                             </tr>
-                        ))}
+                        ))} */}
                     </tbody>
                 </table>
             </div>

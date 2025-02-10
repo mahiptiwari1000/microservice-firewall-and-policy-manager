@@ -3,22 +3,10 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Node, Link } from "@/types";
 import {API_BASE_URL} from "@/config";
+import { NetworkContextType } from "@/types";
 
-// Define Context Type
-interface NetworkContextType {
-    nodes: Node[];
-    links: Link[];
-    addNode: (node: Node) => void;
-    addLink: (link: Link) => void;
-    removeNode: (nodeId: string) => void;
-    removeLink: (linkIndex: number) => void;
-    fetchData: () => Promise<void>;
-}
-
-// Create Context
 const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 
-// Provider Component
 export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
      const [nodes, setNodes] = useState<Node[]>([]);
      const [links, setLinks] = useState<Link[]>([]);
@@ -26,7 +14,7 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const fetchData = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}api/network`); // Replace with actual backend API
+            const response = await fetch(`${API_BASE_URL}api/network`);
             const data = await response.json();
             setNodes(data.nodes);
             setLinks(data.links);
@@ -63,7 +51,6 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }, [])
 
     return (
-        // <NetworkContext.Provider value={{ nodes, links, addNode, addLink, removeNode, removeLink, fetchData }}>
         <NetworkContext.Provider value={{ nodes, links, fetchData}}>
             {children}
         </NetworkContext.Provider>

@@ -1,6 +1,4 @@
-// Centralized Type Definitions
-
-export interface Node {
+export interface Node extends d3.SimulationNodeDatum{
     id: string;
     group?: string;
     x?: number;
@@ -10,13 +8,13 @@ export interface Node {
 }
 
 export interface Link {
-    source: string;
-    target: string;
+    source: Node | string;
+    target: Node | string;
     status: "allow" | "deny";
 }
 
 export interface Policy {
-    _id?: string;  // 👈 Make _id optional to handle cases where it's not present
+    _id?: string; 
     source: string;
     target: string;
     action: "allow" | "deny";
@@ -34,4 +32,10 @@ export interface Policy {
     source: string;
     target: string;
     action: "allow" | "deny";
+}
+
+export interface NetworkContextType {
+    nodes: Node[];
+    links: Link[];
+    fetchData: () => void;
 }
