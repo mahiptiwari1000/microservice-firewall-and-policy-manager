@@ -16,7 +16,7 @@ export interface Link {
 }
 
 export interface Policy {
-    id: number;
+    _id?: string;  // 👈 Make _id optional to handle cases where it's not present
     source: string;
     target: string;
     action: "allow" | "deny";

@@ -13,7 +13,12 @@ const AccessPolicies: React.FC = () => {
         try {
             const response = await fetch(`${API_BASE_URL}api/policies`);
             const data = await response.json();
-            setPolicies(data);
+            setPolicies(data.map(policy => ({
+                _id: policy._id, // Ensure _id is mapped correctly
+                source: policy.source,
+                target: policy.target,
+                action: policy.action
+            })));
         } catch (error) {
             console.error("Error fetching policies:", error);
         }
@@ -80,20 +85,49 @@ const AccessPolicies: React.FC = () => {
         setNewPolicy({ id: 0, source: "", target: "", action: "allow" });
     };
 
-    const deletePolicy = async (id: number) => {
+    const deletePolicy = async (id: string) => {
         try {
+            const policyToDelete = policies.find(policy => policy._id === id);
+            if (!policyToDelete) {
+                console.error("Policy not found!");
+                return;
+            }
+    
+            const { source, target } = policyToDelete;
+    
             await fetch(`${API_BASE_URL}api/policies/${id}`, {
                 method: "DELETE",
             });
-
-            setPolicies(policies.filter(policy => policy.id !== id));
-
+    
+            await fetch(`${API_BASE_URL}api/network/link/${source}/${target}`, {
+                method: "DELETE",
+            });
+    
+            const remainingLinks = links.filter(
+                link => link.source === source || link.target === source || link.source === target || link.target === target
+            );
+    
+            if (!remainingLinks.some(link => link.source === source || link.target === source)) {
+                await fetch(`${API_BASE_URL}api/network/node/${source}`, {
+                    method: "DELETE",
+                });
+            }
+    
+            if (!remainingLinks.some(link => link.source === target || link.target === target)) {
+                await fetch(`${API_BASE_URL}api/network/node/${target}`, {
+                    method: "DELETE",
+                });
+            }
+    
+            setPolicies(policies.filter(policy => policy._id !== id));
+    
             fetchData();
             fetchPolicies();
         } catch (error) {
             console.error("Error deleting policy:", error);
         }
     };
+    
 
     useEffect(() => {
         fetchPolicies();
@@ -164,7 +198,7 @@ const AccessPolicies: React.FC = () => {
                                     </span>
                                 </td>
                                 <td className="p-3">
-                                    <button onClick={() => deletePolicy(policy.id)}
+                                <button onClick={() => deletePolicy(policy._id)}
                                         className="bg-red-600 px-3 py-1 rounded hover:bg-red-500">
                                         Delete 
                                     </button>
