@@ -11,6 +11,9 @@ const Dashboard: React.FC = () => {
     const [source, setSource] = useState("");
     const [target, setTarget] = useState("");
     const [action, setAction] = useState("allow");
+    const [loading, setLoading] = useState(false);
+    const [report,setReport] = useState<string>("");
+    const [modalOpen, setModalOpen] = useState<boolean>(false);
 
     const fetchPolicies = async () => {
       try {
@@ -21,6 +24,52 @@ const Dashboard: React.FC = () => {
           console.error("Error fetching policies:", error);
       }
   };
+
+  const generateReport = async () => {
+    if (policies.length === 0) {
+        return alert("No policies available to generate a report.");
+    }
+
+    setLoading(true);
+    setReport(""); 
+
+    try {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "gpt-4",
+                messages: [
+                    {
+                        role: "user",
+                        content: `Analyze the following security policies and generate a brief 4-5 line report and summarize what's exactly happening between nodes and explain the connection between them, preferably in points, no need of adding hyphens in front of the points, spacing is enough. Also no of points should be equal to no of policies:
+                        
+                        ${policies.map(p => `- ${p.source} → ${p.target} (${p.action})`).join("\n")}`
+                    }
+                ],
+                temperature: 0.1,
+                max_tokens: 100, 
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.choices?.length > 0) {
+            setReport(data.choices[0].message.content);
+            setModalOpen(true); 
+        } else {
+            setReport("No report generated.");
+        }
+    } catch (error) {
+        console.error("Error generating AI report:", error);
+        alert("Failed to generate AI report.");
+    } finally {
+        setLoading(false);
+    }
+};
 
     useEffect(() => {
       fetchPolicies();
@@ -74,7 +123,6 @@ const Dashboard: React.FC = () => {
       <div className="w-full min-h-screen p-6 bg-gray-900 text-white">
   <h1 className="text-2xl font-semibold mb-4">Security Dashboard Overview</h1>
 
-  {/* Manage Policies Section */}
   <div className="w-full bg-gray-800 p-6 rounded-lg shadow-md mb-6">
     <h2 className="text-lg font-semibold mb-2">Manage Policies</h2>
     <div className="flex flex-wrap gap-2 mb-4">
@@ -108,7 +156,36 @@ const Dashboard: React.FC = () => {
       </button>
     </div>
 
-    {/* Policies Table */}
+    <div className="mt-4 mb-4 flex gap-2">
+    <button 
+                onClick={generateReport} 
+                className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 rounded shadow-md hover:opacity-80 transition-all"
+            >
+                {loading ? "Generating..." : "Generate AI Report"}
+            </button>
+
+{modalOpen && (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div className="bg-gray-900 p-6 rounded-lg shadow-lg max-w-md w-full text-white">
+            <h2 className="text-lg font-semibold mb-2">AI-Generated Security Report</h2>
+
+                {report.split("\n").map((line, index) => (
+                    line.trim() && 
+                    <p key={index}>{line}</p>
+                ))}
+
+            <button 
+                onClick={() => setModalOpen(false)}
+                className="mt-4 w-full bg-red-500 px-4 py-2 rounded hover:bg-red-600"
+            >
+                Close
+            </button>
+        </div>
+    </div>
+)}
+    </div>
+
+
     <h3 className="text-md font-semibold mb-2">Existing Policies</h3>
     <div className="overflow-x-auto">
       <table className="w-full text-white border-collapse">
@@ -148,7 +225,6 @@ const Dashboard: React.FC = () => {
     </div>
   </div>
 
-  {/* Recent Logs Section */}
   <div className="w-full bg-gray-800 p-4 rounded-lg shadow-md">
     <h2 className="text-lg font-semibold">Recent Security Logs</h2>
     <ul className="text-gray-300 mt-2">
